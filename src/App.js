@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import './App.css';
 
 const HomeDesignGenerator = () => {
   const [formData, setFormData] = useState({
-    total_area: 1500,
-    bedrooms: 3,
-    bathrooms: 2,
-    style: 'Modern',
-    budget: 250000,
-    climate: 'Temperate'
+    total_area: '',
+    bedrooms: '',
+    bathrooms: '',
+    style: '',
+    budget: '',
+    climate: ''
   });
   const [design, setDesign] = useState(null);
+  const [designError, setDesignError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -23,18 +25,23 @@ const HomeDesignGenerator = () => {
 
   const generateDesign = async () => {
     setLoading(true);
+    setDesign(null);
+    setDesignError(null);
     try {
       const response = await axios.post('http://localhost:5000/generate-design', formData);
-      setDesign(response.data.design);
+      const { explanation, image_url } = response.data;
+      setDesign({ explanation, image_url });
     } catch (error) {
       console.error('Design generation failed', error);
+      setDesignError('Failed to generate the design. Please try again.');
     }
     setLoading(false);
   };
 
   return (
     <div className="container">
-      <h1>AI Home Design Generator</h1>
+      <h1>Planify AI</h1>
+      <h6>(by Rahul and Shashank)</h6>
       <div className="form-grid">
         <input
           type="number"
@@ -62,6 +69,9 @@ const HomeDesignGenerator = () => {
           value={formData.style}
           onChange={handleInputChange}
         >
+          <option value="" disabled>
+            Select Style
+          </option>
           <option>Modern</option>
           <option>Traditional</option>
           <option>Minimalist</option>
@@ -78,6 +88,9 @@ const HomeDesignGenerator = () => {
           value={formData.climate}
           onChange={handleInputChange}
         >
+          <option value="" disabled>
+            Select Climate
+          </option>
           <option>Temperate</option>
           <option>Tropical</option>
           <option>Desert</option>
@@ -86,10 +99,17 @@ const HomeDesignGenerator = () => {
       <button onClick={generateDesign} disabled={loading}>
         {loading ? 'Generating...' : 'Generate Design'}
       </button>
+
+      {designError && <p className="error">{designError}</p>}
+
       {design && (
         <div className="design-result">
+          
+          {design.image_url && (
+            <img src={design.image_url} alt="Generated Home Design" className="design-image" />
+          )}
           <h2>Generated Home Design</h2>
-          <pre>{design}</pre>
+          <pre>{design.explanation}</pre>
         </div>
       )}
     </div>
